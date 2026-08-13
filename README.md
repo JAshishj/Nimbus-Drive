@@ -1,136 +1,118 @@
 # Nimbus Drive
 
-A full-stack cloud storage web application inspired by Google Drive. Nimbus Drive allows users to register, log in, upload, view, manage, and download files using secure user authentication and cloud storage integration.
+A Google Drive clone I built to actually learn backend development properly — auth, file storage, the works — instead of just reading about it. Users can register, log in, upload files, organize them, and download them back, all backed by JWT auth and S3 storage.
 
----
+## Features
 
-## 🚀 Features
+**Auth**
+- Registration and login, passwords hashed with bcrypt
+- JWT access tokens + refresh tokens, so sessions don't just live forever or die every 15 minutes
+- Protected routes — you can't touch anything without being logged in
 
-- 🔑 **Authentication & Authorization**
-  - User Registration and Login with hashed passwords using `bcrypt`.
-  - JWT-based authentication (Access Tokens & Refresh Tokens).
-  - Protected routes and session management.
+**Files**
+- Upload to AWS S3 via `multer-s3`
+- List, view, download, and delete your own files
+- Everything scoped to the logged-in user — no seeing other people's stuff
 
-- 📁 **File & Folder Management**
-  - Upload files seamlessly using `multer` / `multer-s3` to AWS S3 storage.
-  - Fetch and view file lists tailored to the logged-in user.
-  - Download or delete uploaded files securely.
+**Stack**
+- React 19 + Vite on the frontend, React Router for navigation
+- TanStack Query for data fetching/caching (way less `useEffect` juggling than doing it by hand)
+- Tailwind for styling
+- Express 5 + Node on the backend, RESTful-ish API
 
-- ⚡ **Modern Tech Stack & UI**
-  - High-performance frontend powered by Vite and React 19.
-  - Data fetching and caching optimized with `@tanstack/react-query`.
-  - Responsive styling built with Tailwind CSS.
-  - Express v5 backend with RESTful API architecture.
+## Tech Stack
 
----
+### Frontend
+- React 19 (Vite)
+- React Router DOM v7
+- TanStack React Query v5
+- Tailwind CSS v4
 
-## 🛠️ Tech Stack
+### Backend
+- Node.js + Express v5
+- `jsonwebtoken` + `bcrypt` for auth
+- Multer + `multer-s3` + `@aws-sdk/client-s3` for file uploads
+- Nodemon for dev
 
-### **Frontend**
-- **Framework:** React 19 (Vite)
-- **Routing:** React Router DOM (v7)
-- **State & Data Fetching:** TanStack React Query (v5)
-- **Styling:** Tailwind CSS (v4)
+## Project Structure
 
-### **Backend**
-- **Runtime Environment:** Node.js
-- **Framework:** Express.js (v5)
-- **Authentication:** JSON Web Tokens (`jsonwebtoken`), `bcrypt`
-- **File Handling & Cloud Storage:** Multer, `@aws-sdk/client-s3`, `multer-s3`
-- **Dev Server:** Nodemon
-
----
-
-## 📁 Directory Structure
-
-```text
+```
 Nimbus Drive/
 ├── Backend/
-│   ├── config/          # S3 and storage configurations
-│   ├── controllers/     # Authentication & file management logic
-│   ├── middleware/      # JWT verification and route handlers
-│   ├── routes/          # Express route declarations (auth, files, etc.)
-│   ├── server.js        # Entry point for backend server
+│   ├── config/          # S3 and storage config
+│   ├── controllers/     # auth + file logic
+│   ├── middleware/      # JWT verification, etc.
+│   ├── routes/          # route declarations
+│   ├── server.js
 │   └── package.json
 │
 ├── Frontend/
-│   ├── public/          # Static assets
+│   ├── public/
 │   ├── src/
-│   │   ├── api/         # API request hooks and helpers
-│   │   ├── components/  # Reusable UI components
-│   │   ├── App.jsx      # Main application component
-│   │   └── main.jsx     # App entry point
+│   │   ├── api/         # request helpers / hooks
+│   │   ├── components/
+│   │   ├── App.jsx
+│   │   └── main.jsx
 │   └── package.json
 └── README.md
 ```
 
----
+## Getting Started
 
-## ⚙️ Getting Started
+You'll need Node.js installed. Beyond that:
 
-### Prerequisites
-Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
-
-### 1. Clone the repository
+### 1. Clone it
 ```bash
 git clone <repository-url>
 cd "Google Drive Clone"
 ```
 
-### 2. Setup Backend
+### 2. Backend
 
-1. Navigate to the `Backend` directory:
-   ```bash
-   cd Backend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create a `.env` file in `Backend/` with your credentials:
-   ```env
-   PORT=3500
-   ACCESS_TOKEN_SECRET=your_access_token_secret
-   REFRESH_TOKEN_SECRET=your_refresh_token_secret
-   
-   # AWS S3 Configuration
-   AWS_REGION=your_aws_region
-   AWS_ACCESS_KEY_ID=your_access_key_id
-   AWS_SECRET_ACCESS_KEY=your_secret_access_key
-   S3_BUCKET_NAME=your_bucket_name
-   ```
-4. Start the backend development server:
-   ```bash
-   npm run dev
-   ```
+```bash
+cd Backend
+npm install
+```
 
-### 3. Setup Frontend
+Create a `.env` in `Backend/`:
+```env
+PORT=3500
+ACCESS_TOKEN_SECRET=your_access_token_secret
+REFRESH_TOKEN_SECRET=your_refresh_token_secret
 
-1. Navigate to the `Frontend` directory:
-   ```bash
-   cd ../Frontend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the Vite development server:
-   ```bash
-   npm run dev
-   ```
+AWS_REGION=your_aws_region
+AWS_ACCESS_KEY_ID=your_access_key_id
+AWS_SECRET_ACCESS_KEY=your_secret_access_key
+S3_BUCKET_NAME=your_bucket_name
+```
+
+Then:
+```bash
+npm run dev
+```
+
+### 3. Frontend
+
+```bash
+cd ../Frontend
+npm install
+npm run dev
+```
+
+## API Endpoints
+
+**Auth**
+- `POST /register` — create an account
+- `POST /login` — log in, get tokens back
+- `GET /refresh` — get a new access token
+- `POST /logout` — end the session
+- `GET /me` — current user info
+
+**Files**
+- `GET /files` — list your files
+- `POST /files` — upload a file (goes to S3)
+- `DELETE /files/:id` — delete a file
 
 ---
 
-## 🔐 API Endpoints Summary
-
-- **Auth**
-  - `POST /register` - Register a new user
-  - `POST /login` - Log in user and receive JWT tokens
-  - `GET /refresh` - Refresh access token
-  - `POST /logout` - Log out user
-  - `GET /me` - Get current user profile info
-
-- **Files**
-  - `GET /files` - List user files
-  - `POST /files` - Upload a file to S3
-  - `DELETE /files/:id` - Delete a file
+Built as a learning project — if you spot something that could be done better, that's kind of the point.
