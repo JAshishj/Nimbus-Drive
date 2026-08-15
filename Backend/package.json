@@ -23,7 +23,8 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "multer-s3": "^3.0.1",
-    "node": "^26.6.0"
+    "node": "^26.6.0",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

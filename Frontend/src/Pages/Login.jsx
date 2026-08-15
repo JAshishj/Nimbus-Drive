@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Icon from "../components/Icon";
+import Spinner from "../components/Spinner";
 import { useAuth } from "../Context/AuthContext";
 
 const Login = () => {
   const { login } = useAuth();
 
   const [show, setShow] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -53,13 +55,15 @@ const Login = () => {
     setError({});
 
     try {
+      setIsSubmitting(true);
       await login(formData.email, formData.password);
       navigate(location.state?.from || "/", { replace: true });
-
     } catch (error) {
       setError({
         apiError: error.message || "Login failed. Please try again.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -148,9 +152,10 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShow(!show)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-accent"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 grid place-items-center w-8 h-8 rounded-lg text-faint hover:text-ink hover:bg-line/50 transition-colors"
+                  aria-label={show ? "Hide password" : "Show password"}
                 >
-                  {show ? "Hide" : "Show"}
+                  <Icon name={show ? "eyeOff" : "eye"} size={17} />
                 </button>
               </div>
               {error.password && (
@@ -161,6 +166,9 @@ const Login = () => {
             <div className="flex items-center justify-center pt-1">
               <button
                 type="button"
+                onClick={() =>
+                  setError({ apiError: "Forgot password is not implemented yet." })
+                }
                 className="text-sm font-medium text-accent hover:underline"
               >
                 Forgot password?
@@ -169,9 +177,17 @@ const Login = () => {
 
             <button
               type="submit"
-              className="w-full h-11 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-[#185275] transition-colors shadow-sm"
+              disabled={isSubmitting}
+              className="w-full h-11 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-[#185275] transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Sign in
+              {isSubmitting ? (
+                <>
+                  <Spinner className="h-4 w-4 text-white" />
+                  <span>Signing in…</span>
+                </>
+              ) : (
+                "Sign in"
+              )}
             </button>
           </form>
 

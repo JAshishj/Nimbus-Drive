@@ -18,13 +18,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const data = await authApi.login(email, password);
     setAccessToken(data.accessToken);
-    queryClient.setQueriesData(["me"], data.user);
+    queryClient.setQueryData(["me"], data.user);
   };
 
   const logout = async () => {
     await authApi.logout();
     setAccessToken(null);
-    queryClient.setQueriesData(["me"], null);
+    queryClient.setQueryData(["me"], null);
   };
 
   return (

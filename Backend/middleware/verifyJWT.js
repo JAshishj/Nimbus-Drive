@@ -1,4 +1,4 @@
-import { verify } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 const verifyJWT = (req, res, next) => {
   const authHeader = req.headers["authorization"];
@@ -6,7 +6,7 @@ const verifyJWT = (req, res, next) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
   const token = authHeader.split(" ")[1];
-  verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: "Forbidden" });
     }

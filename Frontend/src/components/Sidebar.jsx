@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom'
 import Icon from './Icon'
 import { sections } from '../data/data.js'
+import { useAuth } from '../Context/AuthContext.jsx'
 
 export default function Sidebar({ active, onSelect, open, onToggle }) {
+  const { user } = useAuth();
+
   return (
     <>
       <div
@@ -54,12 +57,12 @@ export default function Sidebar({ active, onSelect, open, onToggle }) {
           <div className="rounded-xl border border-line bg-surface p-4">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">Storage</span>
-              <span className="text-faint">62%</span>
+              <span className="text-faint">1%</span>
             </div>
             <div className="mt-2.5 h-1.5 rounded-full bg-line overflow-hidden">
-              <div className="h-full w-[62%] rounded-full bg-accent" />
+              <div className="h-full w-[1%] rounded-full bg-accent" />
             </div>
-            <p className="mt-2.5 text-xs text-faint">7.4 GB of 15 GB used</p>
+            <p className="mt-2.5 text-xs text-faint">0.02 GB of 2 GB used</p>
           </div>
 
           <Link
@@ -70,11 +73,11 @@ export default function Sidebar({ active, onSelect, open, onToggle }) {
             Settings
           </Link>
           <Link
-            to="/login"
+            to="/logout"
             className="mt-1 w-full flex items-center gap-3.5 px-3 py-2.5 rounded-lg text-sm text-mute hover:bg-line/50 hover:text-ink transition-colors font-medium"
           >
-            <Icon name="shared" size={19} />
-            Sign out
+            <Icon name="logout" size={19} />
+            { user ? "sign out" : "sign in" }
           </Link>
         </div>
       </aside>

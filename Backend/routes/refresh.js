@@ -1,5 +1,5 @@
 import express from "express";
-import handelrefresh from "../controllers/resfreshController";
+import { handelrefresh } from "../controllers/resfreshController.js";
 
 const router = express.Router();
 

@@ -15,11 +15,19 @@ export function useFile(id) {
   });
 }
 
-export function useUploadFile(folderId) {
+export function useUploadFile(defaultFolderId, options = {}) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (file) => filesApi.upload(file, folderId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['files', folderId ?? 'root'] }),
+    mutationFn: ({ file, folderId = defaultFolderId }) =>
+      filesApi.uploadFile(file, folderId),
+    onSuccess: (data, variables, context) => {
+      const targetFolderId = variables?.folderId ?? defaultFolderId;
+      queryClient.invalidateQueries({ queryKey: ["files", targetFolderId ?? "root"] });
+      options.onSuccess?.(data, variables, context);
+    },
+    onError: (err, variables, context) => {
+      options.onError?.(err, variables, context);
+    },
   });
 }
 

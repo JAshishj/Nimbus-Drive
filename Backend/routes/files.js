@@ -1,7 +1,7 @@
 import express from "express";
-import upload from "../config/multer";
-import verifyJWT from "../middleware/verifyJWT";
-import { getAllFiles, getFile, uploadFile, deleteFile, viewFile } from "../controllers/filesController";
+import upload from "../config/multer.js";
+import { verifyJWT } from "../middleware/verifyJWT.js";
+import { getAllFiles, getFile, uploadFile, deleteFile, viewFile } from "../controllers/filesController.js";
 
 const router = express.Router();
 

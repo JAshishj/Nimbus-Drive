@@ -1,4 +1,4 @@
-import { sign } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { createHash } from "crypto";
 import pool from "../config/db.js";
 
@@ -17,7 +17,7 @@ const handelrefresh = async (req, res) => {
   const stored = result.rows[0];
   if (!stored) return res.status(401).json({ error: "Invalid or expired refresh token" });
 
-  const accessToken = sign(
+  const accessToken = jwt.sign(
     { userId: stored.user_id },
     process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: "15m" },

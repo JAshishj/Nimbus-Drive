@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "../api/auth";
 import Icon from "../components/Icon";
+import Spinner from "../components/Spinner";
 
 const Register = () => {
   const [show, setShow] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -62,6 +64,7 @@ const Register = () => {
     setError({});
 
     try {
+      setIsSubmitting(true);
       await authApi.register(
         formData.name,
         formData.email,
@@ -73,6 +76,8 @@ const Register = () => {
       setError({
         apiError: error.message || "Registration failed. Please try again.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -173,9 +178,10 @@ const Register = () => {
                 <button
                   type="button"
                   onClick={() => setShow(!show)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-accent"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 grid place-items-center w-8 h-8 rounded-lg text-faint hover:text-ink hover:bg-line/50 transition-colors"
+                  aria-label={show ? "Hide password" : "Show password"}
                 >
-                  {show ? "Hide" : "Show"}
+                  <Icon name={show ? "eyeOff" : "eye"} size={17} />
                 </button>
               </div>
             </label>
@@ -196,18 +202,27 @@ const Register = () => {
                 <button
                   type="button"
                   onClick={() => setShow(!show)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-accent"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 grid place-items-center w-8 h-8 rounded-lg text-faint hover:text-ink hover:bg-line/50 transition-colors"
+                  aria-label={show ? "Hide password" : "Show password"}
                 >
-                  {show ? "Hide" : "Show"}
+                  <Icon name={show ? "eyeOff" : "eye"} size={17} />
                 </button>
               </div>
             </label>
 
             <button
               type="submit"
-              className="w-full mt-5 h-11 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-[#185275] transition-colors shadow-sm"
+              disabled={isSubmitting}
+              className="w-full mt-5 h-11 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-[#185275] transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Create account
+              {isSubmitting ? (
+                <>
+                  <Spinner className="h-4 w-4 text-white" />
+                  <span>Creating account…</span>
+                </>
+              ) : (
+                "Create account"
+              )}
             </button>
           </form>
 

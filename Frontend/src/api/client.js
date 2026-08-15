@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 let accessToken = null;
 export const setAccessToken = (token) => {
@@ -53,19 +53,28 @@ export async function apiFetch(endpoint, options = {}) {
 
   let response = await doFetch(accessToken);
 
-  if (response.status === 401) {
+  if (response.status === 401 && endpoint !== "/login" && endpoint !== "/register" && endpoint !== "/refresh") {
     try {
       await refreshAccessToken();
       response = await doFetch(accessToken);
     } catch {
       setAccessToken(null);
-      window.location.href = "/login";
+      if (typeof window !== "undefined" && window.location.pathname !== "/login" && window.location.pathname !== "/register") {
+        window.location.href = "/login";
+      }
       throw new Error("Session expired");
     }
   }
 
   if (!response.ok) {
-    throw new Error("Refresh failed");
+    let message = "Request failed";
+    try {
+      const errorData = await response.clone().json();
+      message = errorData.message || errorData.error || message;
+    } catch {
+      // response might not be json
+    }
+    throw new Error(message);
   }
 
   return response;

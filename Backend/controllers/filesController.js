@@ -1,6 +1,6 @@
-import pool from "../config/db";
-import { unlink } from "fs/promises";
-import { resolve } from "path";
+import pool from "../config/db.js";
+import r2 from "../config/r2.js";
+import { DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 
 const getAllFiles = async (req, res) => {
   try {
@@ -12,7 +12,7 @@ const getAllFiles = async (req, res) => {
         : null;
 
     const result = await pool.query(
-      `SELECT * FROM files WHERE user_id = $1 AND parent_folder_id IS NOT DISTINCT FROM $2 ORDER BY created_at DESC`,
+      `SELECT * FROM files WHERE owner_id = $1 AND folder_id IS NOT DISTINCT FROM $2 ORDER BY created_at DESC`,
       [userId, validFolderId],
     );
     res.status(200).json(result.rows);
@@ -27,7 +27,7 @@ const getFile = async (req, res) => {
     const id = req.params.id;
 
     const result = await pool.query(
-      "SELECT * FROM files WHERE id = $1 AND user_id = $2",
+      "SELECT * FROM files WHERE id = $1 AND owner_id = $2",
       [id, userId],
     );
 
@@ -46,11 +46,10 @@ const uploadFile = async (req, res) => {
 
     const userId = req.user.userId;
     const folderId = req.body.folderId || null;
-    const { originalname, mimetype, size, path } = req.file;
-/*const { originalname, mimetype, size, key } = req.file; */
+    const { originalname, mimetype, size, key } = req.file;
     const result = await pool.query(
-      "INSERT INTO files (name, path, size, mime_type, owner_id, parent_folder_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [originalname, path, size, mimetype, userId, folderId],
+      "INSERT INTO files (name, path, size, mime_type, owner_id, folder_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      [originalname, key, size, mimetype, userId, folderId],
     );
     return res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -64,7 +63,7 @@ const deleteFile = async (req, res) => {
     const id = req.params.id;
 
     const result = await pool.query(
-      "SELECT * FROM files WHERE id = $1 AND user_id = $2",
+      "SELECT * FROM files WHERE id = $1 AND owner_id = $2",
       [id, userId],
     );
 
@@ -73,10 +72,13 @@ const deleteFile = async (req, res) => {
 
     const file = result.rows[0];
     if (file.path) {
-      await unlink(file.path);
+      await r2.send(new DeleteObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: file.path,
+      }));
     }
 
-    await pool.query("DELETE FROM files WHERE id = $1", [id]);
+    await pool.query("DELETE FROM files WHERE id = $1 AND owner_id = $2", [id, userId]);
     return res.status(200).json({ message: "File deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete file" });
@@ -89,7 +91,7 @@ const viewFile = async (req, res) => {
     const id = req.params.id;
 
     const result = await pool.query(
-      "SELECT * FROM files WHERE id = $1 AND user_id = $2",
+      "SELECT * FROM files WHERE id = $1 AND owner_id = $2",
       [id, userId],
     );
 
@@ -98,9 +100,15 @@ const viewFile = async (req, res) => {
 
     const file = result.rows[0];
 
+    const object = await r2.send(
+      new GetObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: file.path,
+      }),
+    );
     res.setHeader("Content-Type", file.mime_type || "application/octet-stream");
     res.setHeader("Content-Disposition", `inline; filename="${file.name}"`);
-    res.sendFile(resolve(file.path));
+    object.Body.pipe(res);
   } catch (error) {
     res.status(500).json({ error: "Failed to view file" });
   }

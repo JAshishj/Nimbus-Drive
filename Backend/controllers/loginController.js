@@ -1,7 +1,7 @@
-import { compare } from "bcrypt";
-import { sign } from "jsonwebtoken";
-import { createHash, randomBytes } from "crypto";
-import pool from "../config/db";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import pool from "../config/db.js";
 
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -28,21 +28,22 @@ const loginUser = async (req, res) => {
     const user = result.rows[0];
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
-    const valid = await compare(password, user.password);
+    const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: "Invalid credentials" });
 
-    const accessToken = sign(
+    const accessToken = jwt.sign(
       { userId: user.id },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "15m" },
     );
 
-    const refreshToken = randomBytes(40).toString("hex");
-    const hashedrefreshToken = createHash("sha256")
+    const refreshToken = crypto.randomBytes(40).toString("hex");
+    const hashedrefreshToken = crypto
+      .createHash("sha256")
       .update(refreshToken)
       .digest("hex");
     await pool.query(
-      "INSERT INTO refresh_tokens (user_id, token_hash,  expires_at, created_at, device_info) VALUES ($1,$2,$3,$4)",
+      "INSERT INTO refresh_tokens (user_id, token_hash,  expires_at, device_info) VALUES ($1,$2,$3,$4)",
       [
         user.id,
         hashedrefreshToken,

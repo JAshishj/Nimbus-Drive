@@ -1,119 +1,8 @@
 export const sections = [
   { id: 'drive', label: 'My Drive', icon: 'drive' },
-  { id: 'shared', label: 'Shared with me', icon: 'shared' },
   { id: 'recent', label: 'Recent', icon: 'recent' },
   { id: 'starred', label: 'Starred', icon: 'starred' },
   { id: 'trash', label: 'Trash', icon: 'trash' },
-]
-
-export const files = [
-  {
-    id: 1,
-    name: 'Design',
-    type: 'folder',
-    owner: 'me',
-    modified: 'Aug 5',
-    starred: true,
-    color: '#e8b33c',
-  },
-  {
-    id: 2,
-    name: 'Quarterly Reports',
-    type: 'folder',
-    owner: 'me',
-    modified: 'Aug 4',
-    starred: false,
-    color: '#8a9bb5',
-  },
-  {
-    id: 3,
-    name: 'Projects',
-    type: 'folder',
-    owner: 'me',
-    modified: 'Aug 3',
-    starred: false,
-    color: '#6db98a',
-  },
-  {
-    id: 4,
-    name: 'Launch Script',
-    type: 'code',
-    ext: 'js',
-    size: '18 KB',
-    owner: 'me',
-    modified: 'Aug 6',
-    starred: true,
-  },
-  {
-    id: 5,
-    name: 'Brand Guidelines',
-    type: 'pdf',
-    ext: 'pdf',
-    size: '2.4 MB',
-    owner: 'Priya',
-    modified: 'Aug 2',
-    starred: false,
-  },
-  {
-    id: 6,
-    name: 'Roadmap Q4',
-    type: 'sheet',
-    ext: 'xlsx',
-    size: '96 KB',
-    owner: 'me',
-    modified: 'Jul 30',
-    starred: true,
-  },
-  {
-    id: 7,
-    name: 'Sprint Notes',
-    type: 'doc',
-    ext: 'docx',
-    size: '44 KB',
-    owner: 'Sam',
-    modified: 'Jul 28',
-    starred: false,
-  },
-  {
-    id: 8,
-    name: 'Product Walkthrough',
-    type: 'video',
-    ext: 'mp4',
-    size: '128 MB',
-    owner: 'me',
-    modified: 'Jul 22',
-    starred: false,
-  },
-  {
-    id: 9,
-    name: 'Team Offsite',
-    type: 'image',
-    ext: 'jpg',
-    size: '5.1 MB',
-    owner: 'Alex',
-    modified: 'Jul 18',
-    starred: false,
-  },
-  {
-    id: 10,
-    name: 'Notes Draft',
-    type: 'doc',
-    ext: 'md',
-    size: '6 KB',
-    owner: 'me',
-    modified: 'Jul 12',
-    starred: false,
-  },
-  {
-    id: 11,
-    name: 'Backup Archive',
-    type: 'zip',
-    ext: 'zip',
-    size: '612 MB',
-    owner: 'me',
-    modified: 'Jul 9',
-    starred: false,
-  },
 ]
 
 export const fileTypeMeta = {
@@ -144,6 +33,14 @@ export function typeFromFileName(name) {
   return extToType[ext] || 'doc'
 }
 
+export function getFileDisplay(file) {
+  const isFolder = file.mime_type === 'folder' || file.type === 'folder'
+  if (isFolder) return { isFolder, meta: null }
+  const typeKey = file.mime_type || file.type
+  const meta = fileTypeMeta[typeKey] || fileTypeMeta[typeFromFileName(file.name || '')] || fileTypeMeta.doc
+  return { isFolder, meta }
+}
+
 export function formatBytes(bytes) {
   if (!bytes && bytes !== 0) return ''
   if (bytes < 1024) return `${bytes} B`
@@ -155,32 +52,4 @@ export function formatBytes(bytes) {
     i++
   } while (v >= 1024 && i < units.length - 1)
   return `${v.toFixed(v >= 100 ? 0 : 1)} ${units[i]}`
-}
-
-const folderColors = ['#e8b33c', '#8a9bb5', '#6db98a', '#d99a8b']
-export const nextId = () => Date.now() + Math.floor(Math.random() * 1000)
-
-export function makeFile(name, sizeBytes) {
-  return {
-    id: nextId(),
-    name,
-    type: typeFromFileName(name),
-    ext: name.split('.').pop()?.toLowerCase() || '',
-    size: formatBytes(sizeBytes),
-    owner: 'me',
-    modified: 'Just now',
-    starred: false,
-  }
-}
-
-export function makeFolder(name) {
-  return {
-    id: nextId(),
-    name,
-    type: 'folder',
-    owner: 'me',
-    modified: 'Just now',
-    starred: false,
-    color: folderColors[Math.floor(Math.random() * folderColors.length)],
-  }
 }
