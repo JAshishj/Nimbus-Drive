@@ -129,7 +129,7 @@ export function ListView({ items, onToggleStar, onOpen }) {
               </button>
             </div>
             <span className="text-sm text-mute hidden sm:block">
-              {isFolder ? "—" : file.size || "—"}
+              {isFolder ? "—" :formatBytes (file.size) || "—"}
             </span>
             <span className="text-sm text-mute hidden sm:block">
               {file.updated_at || file.modified || "—"}

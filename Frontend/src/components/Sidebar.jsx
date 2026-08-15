@@ -57,16 +57,16 @@ export default function Sidebar({ active, onSelect, open, onToggle }) {
           <div className="rounded-xl border border-line bg-surface p-4">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">Storage</span>
-              <span className="text-faint">1%</span>
+              <span className="text-faint">0%</span>
             </div>
             <div className="mt-2.5 h-1.5 rounded-full bg-line overflow-hidden">
-              <div className="h-full w-[1%] rounded-full bg-accent" />
+              <div className="h-full w-[0%] rounded-full bg-accent" />
             </div>
-            <p className="mt-2.5 text-xs text-faint">0.02 GB of 2 GB used</p>
+            <p className="mt-2.5 text-xs text-faint">0.0 GB of 2 GB used</p>
           </div>
 
           <Link
-            to="/login"
+            to="/"
             className="mt-3 w-full flex items-center gap-3.5 px-3 py-2.5 rounded-lg text-sm text-mute hover:bg-line/50 hover:text-ink transition-colors font-medium"
           >
             <Icon name="settings" size={19} />
