@@ -35,6 +35,6 @@ export const authApi = {
   me: async () => {
     const res = await apiFetch("/me", { method: "GET" });
     const data = await res.json();
-    return data;
+    return data.user;
   },
 };

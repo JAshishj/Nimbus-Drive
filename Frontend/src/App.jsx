@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import { GridView, ListView, FileIcon } from "./components/FileView";
@@ -6,8 +6,10 @@ import UploadModal from "./components/UploadModal";
 import Spinner from "./components/Spinner";
 import Icon from "./components/Icon";
 import { fileTypeMeta, typeFromFileName } from "./data/data.js";
-
+import { useAuth } from "./Context/AuthContext.jsx";
 import { useFiles, useViewFile, useDeleteFile } from "./hooks/useFiles.js";
+import { useFolders, useDeleteFolder } from "./hooks/useFolders.js";
+import { filesApi } from "./api/files.js";
 
 const sectionName = {
   drive: "My Drive",
@@ -25,7 +27,19 @@ const App = () => {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmFolderId, setConfirmFolderId] = useState(null);
+  const [folderHistory, setFolderHistory] = useState([]);
   const [, setBump] = useState(0);
+  const { user } = useAuth();
+
+  const confirmTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (confirmFolderId) {
+      confirmTimerRef.current = setTimeout(() => setConfirmFolderId(null), 2000);
+    }
+    return () => clearTimeout(confirmTimerRef.current);
+  }, [confirmFolderId]);
 
   const {
     data: files,
@@ -33,18 +47,16 @@ const App = () => {
     isError: isErrorFiles,
   } = useFiles(currentFolderId);
   const { data: fileUrl, isLoading: isViewing } = useViewFile(selected?.id);
-  const { mutate: deleteFile, isPending: isDeleting } = useDeleteFile(
-    selected?.id,
-    currentFolderId,
-  );
-  useEffect(() => {
-    return () => {
-      if (fileUrl) URL.revokeObjectURL(fileUrl);
-    };
-  }, [fileUrl]);
+  const { mutate: deleteFile, isPending: isDeleting } = useDeleteFile(currentFolderId);
+
+  const { data: folders, isLoading: isLoadingFolders, isError: isErrorFolders } = useFolders(currentFolderId);
+  const { mutate: deleteFolder, isPending: isDeletingFolder } = useDeleteFolder(currentFolderId);
+
 
   const handleItemClick = (item) => {
-    if (item.type === "folder" || item.mime_type === "folder") {
+    if (!item.mime_type) {
+      setConfirmFolderId(null);
+      setFolderHistory((h) => [...h, currentFolderId]);
       setCurrentFolderId(item.id);
     } else {
       setConfirmDelete(false);
@@ -52,8 +64,18 @@ const App = () => {
     }
   };
 
+  const goBack = () => {
+    if (folderHistory.length === 0) return;
+    const prev = folderHistory[folderHistory.length - 1];
+    setCurrentFolderId(prev);
+    setFolderHistory((h) => h.slice(0, -1));
+  };
+
   const items = (() => {
-    let list = Array.isArray(files) ? [...files] : [];
+    let list = [
+      ...(Array.isArray(folders) ? folders : []),
+      ...(Array.isArray(files) ? files : []),
+    ];
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((f) => f.name.toLowerCase().includes(q));
@@ -69,6 +91,15 @@ const App = () => {
     }
   };
 
+  const handleDownload = async () => {
+    try{
+      const url = await filesApi.downloadFile(selected.id);
+      window.open(url, "_blank");
+    }catch(err){
+      console.error("Download failed:", err);
+    }
+  };
+
   const toggleStar = (id) => {
     const f = files.find((x) => x.id === id);
     if (f) {
@@ -81,12 +112,23 @@ const App = () => {
   const closeModal = () => {
     setSelected(null);
     setConfirmDelete(false);
+    setConfirmFolderId(null);
   };
 
   const handleDelete = () => {
     deleteFile(selected.id, {
       onSuccess: () => closeModal(),
     });
+  };
+
+  const handleDeleteFolder = (id) => {
+    if (confirmFolderId === id) {
+      deleteFolder(id, {
+        onSuccess: () => setConfirmFolderId(null),
+      });
+    } else {
+      setConfirmFolderId(id);
+    }
   };
 
   return (
@@ -107,37 +149,56 @@ const App = () => {
           onNew={() => setUploadOpen(true)}
           onMenu={() => setOpen(true)}
           activeLabel={sectionName[active]}
+          onBack={goBack}
+          showBack={folderHistory.length > 0}
         />
 
         <main className="flex-1 overflow-y-auto">
           <div className="px-4 md:px-8 py-6 max-w-6xl mx-auto">
-            {isLoadingFiles ? (
+            {isLoadingFiles || isLoadingFolders ? (
               <div className="py-20 flex flex-col items-center justify-center text-center">
                 <Spinner className="h-7 w-7 text-accent mb-3" />
                 <p className="text-sm font-medium text-mute">Loading files…</p>
               </div>
-            ) : isErrorFiles ? (
+            ) : isErrorFiles || isErrorFolders ? (
               <div className="py-12 text-center text-red-500">
                 Error loading files.
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between mb-5">
-                  <p className="text-sm text-faint">
-                    {items.length} item{items.length === 1 ? "" : "s"}
-                  </p>
+                  <div className="flex items-center gap-6">
+                    {folderHistory.length > 0 && (
+                      <button
+                        onClick={goBack}
+                        className="hidden lg:inline-flex ml-[-50%] items-center gap-1.5 text-base font-semibold text-mute hover:text-ink transition-colors cursor-pointer"
+                      >
+                        <Icon name="arrowLeft" size={19} />
+                        Back
+                      </button>
+                    )}
+                    <p className="text-sm text-faint">
+                      {items.length} item{items.length === 1 ? "" : "s"}
+                    </p>
+                  </div>
                 </div>
                 {view === "grid" ? (
                   <GridView
                     items={items}
                     onToggleStar={toggleStar}
                     onOpen={handleItemClick}
+                    onDeleteFolder={handleDeleteFolder}
+                    confirmDeleteId={confirmFolderId}
+                    isDeletingFolder={isDeletingFolder}
                   />
                 ) : (
                   <ListView
                     items={items}
                     onToggleStar={toggleStar}
                     onOpen={handleItemClick}
+                    onDeleteFolder={handleDeleteFolder}
+                    confirmDeleteId={confirmFolderId}
+                    isDeletingFolder={isDeletingFolder}
                   />
                 )}
               </>
@@ -169,7 +230,11 @@ const App = () => {
                   {selected.name}
                 </h2>
                 <p className="mt-0.5 text-sm text-mute">
-                  {fileTypeMeta[selected.mime_type]?.label || fileTypeMeta[selected.type]?.label || fileTypeMeta[typeFromFileName(selected.name || "")]?.label || "File"}
+                  {fileTypeMeta[selected.mime_type]?.label ||
+                    fileTypeMeta[selected.type]?.label ||
+                    fileTypeMeta[typeFromFileName(selected.name || "")]
+                      ?.label ||
+                    "File"}
                   {selected.size ? ` · ${selected.size}` : ""}
                 </p>
               </div>
@@ -185,16 +250,25 @@ const App = () => {
             <dl className="mt-5 space-y-2.5 text-sm">
               <div className="flex justify-between">
                 <dt className="text-faint">Owner</dt>
-                <dd className="font-medium">Me</dd>
+                <dd className="font-medium">{user.name}</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-faint">Modified</dt>
-                <dd className="font-medium">{selected.created_at || selected.updated_at || selected.modified || "—"}</dd>
+                <dd className="font-medium">
+                  {selected.created_at ||
+                    selected.updated_at ||
+                    selected.modified ||
+                    "—"}
+                </dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-faint">Type</dt>
                 <dd className="font-medium">
-                  {fileTypeMeta[selected.mime_type]?.label || fileTypeMeta[selected.type]?.label || fileTypeMeta[typeFromFileName(selected.name || "")]?.label || "File"}
+                  {fileTypeMeta[selected.mime_type]?.label ||
+                    fileTypeMeta[selected.type]?.label ||
+                    fileTypeMeta[typeFromFileName(selected.name || "")]
+                      ?.label ||
+                    "File"}
                 </dd>
               </div>
             </dl>
@@ -217,7 +291,9 @@ const App = () => {
                   </>
                 )}
               </button>
-              <button className="flex items-center justify-center gap-2 h-10 rounded-lg border border-line text-sm font-medium hover:bg-canvas transition-colors">
+              <button
+              onClick={handleDownload}
+              className="flex items-center justify-center gap-2 h-10 rounded-lg border border-line text-sm font-medium hover:bg-canvas transition-colors">
                 <Icon name="download" size={16} /> Download
               </button>
               <button className="flex items-center justify-center gap-2 h-10 rounded-lg border border-line text-sm font-medium hover:bg-canvas transition-colors">

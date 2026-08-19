@@ -71,6 +71,13 @@ const paths = {
       <path d="m21 15-4.35-4.35L7 21" />
     </>
   ),
+  audio: (
+    <>
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
+    </>
+  ),
   zip: (
     <>
       <path d="M20 7.5 13.5 21l-5-3.5L2 13 8.5 3l11.5 4.5Z" />
@@ -90,6 +97,12 @@ const paths = {
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
   ),
   logout: <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />,
+  user: (
+    <>
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </>
+  ),
   download: (
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
   ),
@@ -112,6 +125,7 @@ const paths = {
   ),
   rename: <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z" />,
   check: <path d="M20 6 9 17l-5-5" />,
+  arrowLeft: <path d="m12 19-7-7 7-7M19 12H5" />,
   file: (
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" />
   ),

@@ -15,29 +15,24 @@ export function useFile(id) {
   });
 }
 
-export function useUploadFile(defaultFolderId, options = {}) {
+export function useUploadFile(folderId) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ file, folderId = defaultFolderId }) =>
+    mutationFn: (file) =>
       filesApi.uploadFile(file, folderId),
-    onSuccess: (data, variables, context) => {
-      const targetFolderId = variables?.folderId ?? defaultFolderId;
-      queryClient.invalidateQueries({ queryKey: ["files", targetFolderId ?? "root"] });
-      options.onSuccess?.(data, variables, context);
-    },
-    onError: (err, variables, context) => {
-      options.onError?.(err, variables, context);
-    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["files", folderId ?? "root"] });
+    }
   });
 }
 
-export function useDeleteFile(id, folderId) {
+export function useDeleteFile(folderId) {
     const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => filesApi.deleteFile(id),
+    mutationFn: (id) => filesApi.deleteFile(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files', folderId ?? 'root'] });
-    },
+    }
   });
 }
 
@@ -46,5 +41,6 @@ export function useViewFile(id){
     queryKey: ["files", "view", id],
     queryFn: () => filesApi.viewFile(id),
     enabled: !!id,
+    staleTime: 0,
   });
 }

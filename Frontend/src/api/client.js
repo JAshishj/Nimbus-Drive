@@ -8,7 +8,6 @@ export const getAcessToken = () => {
   return accessToken;
 };
 
-
 let refreshPromise = null;
 
 export async function refreshAccessToken() {
@@ -30,7 +29,6 @@ export async function refreshAccessToken() {
   return data.accessToken;
 }
 
-
 export async function apiFetch(endpoint, options = {}) {
   const isFormData = options.body instanceof FormData;
 
@@ -39,7 +37,7 @@ export async function apiFetch(endpoint, options = {}) {
       ...options.headers,
     };
     if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+      headers["authorization"] = `Bearer ${token}`;
     }
     if (!isFormData) {
       headers["Content-Type"] = "application/json";
@@ -53,13 +51,22 @@ export async function apiFetch(endpoint, options = {}) {
 
   let response = await doFetch(accessToken);
 
-  if (response.status === 401 && endpoint !== "/login" && endpoint !== "/register" && endpoint !== "/refresh") {
+  if (
+    response.status === 401 &&
+    endpoint !== "/login" &&
+    endpoint !== "/register" &&
+    endpoint !== "/refresh"
+  ) {
     try {
       await refreshAccessToken();
       response = await doFetch(accessToken);
     } catch {
       setAccessToken(null);
-      if (typeof window !== "undefined" && window.location.pathname !== "/login" && window.location.pathname !== "/register") {
+      if (
+        typeof window !== "undefined" &&
+        window.location.pathname !== "/login" &&
+        window.location.pathname !== "/register"
+      ) {
         window.location.href = "/login";
       }
       throw new Error("Session expired");
@@ -68,12 +75,8 @@ export async function apiFetch(endpoint, options = {}) {
 
   if (!response.ok) {
     let message = "Request failed";
-    try {
-      const errorData = await response.clone().json();
-      message = errorData.message || errorData.error || message;
-    } catch {
-      // response might not be json
-    }
+    const errorData = await response.clone().json();
+    message = errorData.message || errorData.error || message;
     throw new Error(message);
   }
 

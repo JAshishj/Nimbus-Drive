@@ -1,11 +1,8 @@
 import { Link } from 'react-router-dom'
 import Icon from './Icon'
 import { sections } from '../data/data.js'
-import { useAuth } from '../Context/AuthContext.jsx'
 
 export default function Sidebar({ active, onSelect, open, onToggle }) {
-  const { user } = useAuth();
-
   return (
     <>
       <div
@@ -66,18 +63,18 @@ export default function Sidebar({ active, onSelect, open, onToggle }) {
           </div>
 
           <Link
-            to="/"
+            to="/settings"
             className="mt-3 w-full flex items-center gap-3.5 px-3 py-2.5 rounded-lg text-sm text-mute hover:bg-line/50 hover:text-ink transition-colors font-medium"
           >
             <Icon name="settings" size={19} />
             Settings
           </Link>
           <Link
-            to="/logout"
+            to="/profile"
             className="mt-1 w-full flex items-center gap-3.5 px-3 py-2.5 rounded-lg text-sm text-mute hover:bg-line/50 hover:text-ink transition-colors font-medium"
           >
-            <Icon name="logout" size={19} />
-            { user ? "sign out" : "sign in" }
+            <Icon name="user" size={19} />
+            Profile
           </Link>
         </div>
       </aside>

@@ -1,4 +1,5 @@
 import Icon from "./Icon";
+import Spinner from "./Spinner";
 import { getFileDisplay, formatBytes } from "../data/data.js";
 
 function FolderGlyph({ color }) {
@@ -31,7 +32,7 @@ export function FileIcon({ file }) {
   );
 }
 
-export function GridView({ items, onToggleStar, onOpen }) {
+export function GridView({ items, onToggleStar, onOpen, onDeleteFolder, confirmDeleteId, isDeletingFolder }) {
   if (items.length === 0) {
     return <EmptyState />;
   }
@@ -47,20 +48,52 @@ export function GridView({ items, onToggleStar, onOpen }) {
           >
             <div className="flex justify-between">
               <FileIcon file={file} />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  /*onToggleStar(file.id)*/
-                }}
-                className={`grid place-items-center w-8 h-8 rounded-lg transition-colors ${
-                  file.starred
-                    ? "text-amber-400 hover:bg-amber-50"
-                    : "text-faint opacity-0 group-hover:opacity-100 hover:bg-line/50 hover:text-ink"
-                }`}
-                aria-label={file.starred ? "Remove star" : "Star"}
-              >
-                <Icon name="starred" size={18} strokeWidth={1.6} />
-              </button>
+              {isFolder ? (
+                confirmDeleteId === file.id ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteFolder(file.id);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 h-8 rounded-lg bg-red-600 text-white text-xs font-semibold transition-colors"
+                    title="Click again to delete"
+                  >
+                    {isDeletingFolder ? (
+                      <Spinner className="h-3.5 w-3.5" />
+                    ) : (
+                      <Icon name="trash" size={14} />
+                    )}
+                    Click again
+                  </button>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteFolder(file.id);
+                    }}
+                    className="grid place-items-center w-8 h-8 rounded-lg text-faint opacity-0 group-hover:opacity-100 hover:bg-line/50 hover:text-red-600 transition-colors"
+                    title="Delete folder"
+                    aria-label="Delete folder"
+                  >
+                    <Icon name="trash" size={17} />
+                  </button>
+                )
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    /*onToggleStar(file.id)*/
+                  }}
+                  className={`grid place-items-center w-8 h-8 rounded-lg transition-colors ${
+                    file.starred
+                      ? "text-amber-400 hover:bg-amber-50"
+                      : "text-faint opacity-0 group-hover:opacity-100 hover:bg-line/50 hover:text-ink"
+                  }`}
+                  aria-label={file.starred ? "Remove star" : "Star"}
+                >
+                  <Icon name="starred" size={18} strokeWidth={1.6} />
+                </button>
+              )}
             </div>
 
             <p
@@ -81,7 +114,7 @@ export function GridView({ items, onToggleStar, onOpen }) {
   );
 }
 
-export function ListView({ items, onToggleStar, onOpen }) {
+export function ListView({ items, onToggleStar, onOpen, onDeleteFolder, confirmDeleteId, isDeletingFolder }) {
   if (items.length === 0) {
     return <EmptyState />;
   }
@@ -108,25 +141,57 @@ export function ListView({ items, onToggleStar, onOpen }) {
                   {isFolder
                     ? "Folder"
                     : `${meta.label}${file.size ? ` · ${formatBytes(file.size)}` : ""}`}
-                  {file.updated_at || file.modified
-                    ? ` · ${file.updated_at || file.modified}`
+                  {file.updated_at
+                    ? ` · ${file.updated_at}`
                     : ""}
                 </p>
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  /*onToggleStar(file.id)*/
-                }}
-                className={`ml-auto shrink-0 grid place-items-center w-8 h-8 rounded-lg transition-colors sm:hidden ${
-                  file.starred
-                    ? "text-amber-400 hover:bg-amber-50"
-                    : "text-faint opacity-0 group-hover:opacity-100 hover:bg-line/50 hover:text-ink"
-                }`}
-                aria-label={file.starred ? "Remove star" : "Star"}
-              >
-                <Icon name="starred" size={17} strokeWidth={1.6} />
-              </button>
+              {isFolder ? (
+                confirmDeleteId === file.id ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteFolder(file.id);
+                    }}
+                    className="ml-auto shrink-0 inline-flex items-center gap-1.5 px-2.5 h-8 rounded-lg bg-red-600 text-white text-xs font-semibold transition-colors"
+                    title="Click again to delete"
+                  >
+                    {isDeletingFolder ? (
+                      <Spinner className="h-3.5 w-3.5" />
+                    ) : (
+                      <Icon name="trash" size={14} />
+                    )}
+                    Click again
+                  </button>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteFolder(file.id);
+                    }}
+                    className="ml-auto shrink-0 grid place-items-center w-8 h-8 rounded-lg text-faint opacity-0 group-hover:opacity-100 hover:bg-line/50 hover:text-red-600 transition-colors"
+                    title="Delete folder"
+                    aria-label="Delete folder"
+                  >
+                    <Icon name="trash" size={17} />
+                  </button>
+                )
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    /*onToggleStar(file.id)*/
+                  }}
+                  className={`ml-auto shrink-0 grid place-items-center w-8 h-8 rounded-lg transition-colors sm:hidden ${
+                    file.starred
+                      ? "text-amber-400 hover:bg-amber-50"
+                      : "text-faint opacity-0 group-hover:opacity-100 hover:bg-line/50 hover:text-ink"
+                  }`}
+                  aria-label={file.starred ? "Remove star" : "Star"}
+                >
+                  <Icon name="starred" size={17} strokeWidth={1.6} />
+                </button>
+              )}
             </div>
             <span className="text-sm text-mute hidden sm:block">
               {isFolder ? "—" :formatBytes (file.size) || "—"}

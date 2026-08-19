@@ -3,6 +3,7 @@ import Icon from "./Icon";
 import Spinner from "./Spinner.jsx";
 import { formatBytes, typeFromFileName, fileTypeMeta } from "../data/data.js";
 import { useUploadFile } from "../hooks/useFiles.js";
+import { useCreateFolder } from "../hooks/useFolders.js";
 
 export default function UploadModal({ folderId, onClose }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -19,14 +20,32 @@ export default function UploadModal({ folderId, onClose }) {
     error,
     reset,
     data: uploadedData,
-  } = useUploadFile(folderId, {
-    onSuccess: () => {
-      // Auto close modal after brief delay so user sees the success state
-      timerRef.current = setTimeout(onClose, 1200);
-    },
-  });
+  } = useUploadFile(folderId);
+
+  const {
+    mutate: createFolder,
+    isPending: isCreating,
+    isSuccess: isFolderCreated,
+    reset: resetFolderCreate,
+  } = useCreateFolder(folderId);
+
+  const folderTimerRef = useRef(null);
+
+  const handleCreateFolder = () => {
+    if (!folderName.trim() || isCreating) return;
+    createFolder(folderName.trim(), {
+      onSuccess: () => {
+        setFolderName("");
+        folderTimerRef.current = setTimeout(() => resetFolderCreate(), 2500);
+      },
+    });
+  };
+
   useEffect(() => {
-    return () => clearTimeout(timerRef.current);
+    return () => {
+      clearTimeout(timerRef.current);
+      clearTimeout(folderTimerRef.current);
+    };
   }, []);
 
   // Close on Escape key if not currently uploading
@@ -49,7 +68,14 @@ export default function UploadModal({ folderId, onClose }) {
 
   const handleStartUpload = () => {
     if (!selectedFile || isPending) return;
-    uploadFile({ file: selectedFile });
+    uploadFile(selectedFile,
+      {
+        onSuccess: () => {
+          // Auto close modal after brief delay so user sees the success state
+          timerRef.current = setTimeout(onClose, 1200);
+        },
+      },
+    );
   };
 
   const handleClearSelected = () => {
@@ -236,11 +262,22 @@ export default function UploadModal({ folderId, onClose }) {
                 </div>
               )}
 
+              {isFolderCreated && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 flex items-center gap-2.5 animate-in fade-in">
+                  <span className="grid place-items-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 shrink-0">
+                    <Icon name="check" size={13} strokeWidth={2.5} />
+                  </span>
+                  <p className="text-xs font-semibold text-emerald-900">
+                    Folder created successfully!
+                  </p>
+                </div>
+              )}
+
               <div className="pt-2 border-t border-line/60">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    if (!folderName.trim()) return;
+                    handleCreateFolder();
                   }}
                   className="flex items-center gap-2"
                 >
@@ -259,12 +296,20 @@ export default function UploadModal({ folderId, onClose }) {
                   </div>
                   <button
                     type="submit"
-                    /*disabled={!folderName.trim()}*/ //Comming Soon
-                    disabled={true}
+                    disabled={!folderName.trim() || isCreating}
                     className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl border border-line text-sm font-medium hover:bg-canvas transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
                   >
-                    <Icon name="plus" size={16} strokeWidth={2} />
-                    Folder
+                    {isCreating ? (
+                      <>
+                        <Spinner className="h-4 w-4" />
+                        Creating…
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="plus" size={16} strokeWidth={2} />
+                        Folder
+                      </>
+                    )}
                   </button>
                 </form>
               </div>

@@ -8,9 +8,20 @@ export default function TopBar({
   onNew,
   onMenu,
   activeLabel,
+  onBack,
+  showBack,
 }) {
   return (
     <header className="flex items-center gap-3 px-4 md:px-6 h-16 shrink-0 border-b border-line bg-canvas/80 backdrop-blur">
+      {showBack && (
+        <button
+          onClick={onBack}
+          className="lg:hidden grid place-items-center w-10 h-10 rounded-lg text-mute hover:bg-line/50"
+          aria-label="Go back"
+        >
+          <Icon name="arrowLeft" size={20} />
+        </button>
+      )}
       <button
         onClick={onMenu}
         className="lg:hidden grid place-items-center w-10 h-10 rounded-lg text-mute hover:bg-line/50"

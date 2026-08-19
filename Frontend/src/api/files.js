@@ -2,10 +2,10 @@ import { apiFetch } from "./client";
 
 export const filesApi = {
   getFiles: async (folderId) => {
-  const query = folderId ? `?folderId=${folderId}` : "";
-  const res = await apiFetch(`/files${query}`, { method: "GET" });
-  return res.json();
-},
+    const query = folderId ? `?folderId=${folderId}` : "";
+    const res = await apiFetch(`/files${query}`, { method: "GET" });
+    return res.json();
+  },
   getFile: async (id) => {
     const res = await apiFetch(`/files/${id}`, { method: "GET" });
     const data = await res.json();
@@ -30,8 +30,13 @@ export const filesApi = {
     return data;
   },
   viewFile: async (id) => {
-    const res = await apiFetch(`/files/${id}/view`, { method: "GET" });
-    const blob = await res.blob();
-    return URL.createObjectURL(blob);
+    const res = await apiFetch(`/files/${id}/download?mode=view`, { method: "GET" });
+    const data = await res.json();
+    return data.url;
+  },
+  downloadFile: async (id) => {
+    const res = await apiFetch(`/files/${id}/download?mode=download`, { method: "GET" });
+    const data = await res.json();
+    return data.url;
   }
 };

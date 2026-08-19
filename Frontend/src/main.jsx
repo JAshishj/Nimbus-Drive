@@ -9,6 +9,8 @@ import App from "./App";
 import Login from "./Pages/Login";
 import Register from "./Pages/Register";
 import Logout from "./Pages/Logout";
+import Profile from "./Pages/Profile";
+import Settings from "./Pages/Settings";
 import NotFound from "./Pages/NotFound";
 import "./index.css";
 
@@ -24,6 +26,22 @@ const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
   { path: "/logout", element: <Logout /> },
+  {
+    path: "/profile",
+    element: (
+      <ProtectedRoute>
+        <Profile />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings",
+    element: (
+      <ProtectedRoute>
+        <Settings />
+      </ProtectedRoute>
+    ),
+  },
   { path: "*", element: <NotFound /> },
 ]);
 

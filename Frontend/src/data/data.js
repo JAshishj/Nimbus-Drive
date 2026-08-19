@@ -13,6 +13,7 @@ export const fileTypeMeta = {
   code: { label: 'Code', dot: '#8a6fd6', icon: 'code' },
   video: { label: 'Video', dot: '#d0578a', icon: 'video' },
   image: { label: 'Image', dot: '#4bb6b0', icon: 'image' },
+  audio: { label: 'Audio', dot: '#f2732c', icon: 'audio' },
   zip: { label: 'Archive', dot: '#c08a3e', icon: 'zip' },
 }
 
@@ -22,6 +23,7 @@ const extToType = {
   cpp: 'code', go: 'code', rs: 'code', sh: 'code',
   jpg: 'image', jpeg: 'image', png: 'image', gif: 'image', svg: 'image', webp: 'image',
   mp4: 'video', mov: 'video', avi: 'video', webm: 'video', mkv: 'video',
+  mp3: 'audio', wav: 'audio', m4a: 'audio', ogg: 'audio', flac: 'audio', aac: 'audio', opus: 'audio',
   pdf: 'pdf',
   doc: 'doc', docx: 'doc', txt: 'doc', md: 'doc', rtf: 'doc',
   xls: 'sheet', xlsx: 'sheet', csv: 'sheet', ods: 'sheet',
@@ -34,7 +36,7 @@ export function typeFromFileName(name) {
 }
 
 export function getFileDisplay(file) {
-  const isFolder = file.mime_type === 'folder' || file.type === 'folder'
+  const isFolder = file.mime_type ? false: true;
   if (isFolder) return { isFolder, meta: null }
   const typeKey = file.mime_type || file.type
   const meta = fileTypeMeta[typeKey] || fileTypeMeta[typeFromFileName(file.name || '')] || fileTypeMeta.doc
