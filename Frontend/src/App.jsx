@@ -36,7 +36,10 @@ const App = () => {
 
   useEffect(() => {
     if (confirmFolderId) {
-      confirmTimerRef.current = setTimeout(() => setConfirmFolderId(null), 2000);
+      confirmTimerRef.current = setTimeout(
+        () => setConfirmFolderId(null),
+        2000,
+      );
     }
     return () => clearTimeout(confirmTimerRef.current);
   }, [confirmFolderId]);
@@ -46,12 +49,19 @@ const App = () => {
     isLoading: isLoadingFiles,
     isError: isErrorFiles,
   } = useFiles(currentFolderId);
+
   const { data: fileUrl, isLoading: isViewing } = useViewFile(selected?.id);
-  const { mutate: deleteFile, isPending: isDeleting } = useDeleteFile(currentFolderId);
 
-  const { data: folders, isLoading: isLoadingFolders, isError: isErrorFolders } = useFolders(currentFolderId);
-  const { mutate: deleteFolder, isPending: isDeletingFolder } = useDeleteFolder(currentFolderId);
+  const { mutate: deleteFile, isPending: isDeleting } =
+    useDeleteFile(currentFolderId);
 
+  const {
+    data: folders,
+    isLoading: isLoadingFolders,
+    isError: isErrorFolders,
+  } = useFolders(currentFolderId);
+  const { mutate: deleteFolder, isPending: isDeletingFolder } =
+    useDeleteFolder(currentFolderId);
 
   const handleItemClick = (item) => {
     if (!item.mime_type) {
@@ -92,10 +102,10 @@ const App = () => {
   };
 
   const handleDownload = async () => {
-    try{
+    try {
       const url = await filesApi.downloadFile(selected.id);
       window.open(url, "_blank");
-    }catch(err){
+    } catch (err) {
       console.error("Download failed:", err);
     }
   };
@@ -292,8 +302,9 @@ const App = () => {
                 )}
               </button>
               <button
-              onClick={handleDownload}
-              className="flex items-center justify-center gap-2 h-10 rounded-lg border border-line text-sm font-medium hover:bg-canvas transition-colors">
+                onClick={handleDownload}
+                className="flex items-center justify-center gap-2 h-10 rounded-lg border border-line text-sm font-medium hover:bg-canvas transition-colors"
+              >
                 <Icon name="download" size={16} /> Download
               </button>
               <button className="flex items-center justify-center gap-2 h-10 rounded-lg border border-line text-sm font-medium hover:bg-canvas transition-colors">

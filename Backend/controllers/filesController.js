@@ -117,6 +117,7 @@ const getFileUrl = async (req, res) => {
       Bucket: process.env.R2_BUCKET_NAME,
       Key: file.path,
       ResponseContentDisposition: disposition,
+      ResponseContentType: file.mime_type,
     });
 
     const url = await getSignedUrl(r2, command, { expiresIn: 300 });
