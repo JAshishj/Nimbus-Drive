@@ -1,15 +1,22 @@
 import express from "express";
 import upload from "../config/multer.js";
-import { verifyJWT } from "../middleware/verifyJWT.js";
-import { getAllFiles, getFile, uploadFile, deleteFile, getFileUrl } from "../controllers/filesController.js";
+import {
+  getAllFiles,
+  getFile,
+  uploadFile,
+  deleteFile,
+  getFileUrl,
+  renameFile,
+} from "../controllers/filesController.js";
 
 const router = express.Router();
 
 router
-  .get("/files", verifyJWT, getAllFiles)
-  .get("/files/:id", verifyJWT, getFile)
-  .post("/files", verifyJWT, upload.single("file"), uploadFile)
-  .delete("/files/:id", verifyJWT, deleteFile)
-  .get("/files/:id/download", verifyJWT, getFileUrl);
+  .get("/files", getAllFiles)
+  .get("/files/:id", getFile)
+  .post("/files", upload.single("file"), uploadFile)
+  .delete("/files/:id", deleteFile)
+  .get("/files/:id/download", getFileUrl)
+  .patch("/files/:id", renameFile);
 
 export default router;

@@ -13,7 +13,11 @@ const getAllFiles = async (req, res) => {
         : null;
 
     const result = await pool.query(
-      `SELECT * FROM files WHERE owner_id = $1 AND folder_id IS NOT DISTINCT FROM $2 ORDER BY created_at DESC`,
+      `SELECT f.*, (s.id IS NOT NULL) AS starred
+      FROM files f
+      LEFT JOIN stars s ON f.id = s.file_id AND s.user_id = $1
+      WHERE f.owner_id = $1 AND f.folder_id IS NOT DISTINCT FROM $2
+      ORDER BY f.created_at DESC`,
       [userId, validFolderId],
     );
     res.status(200).json(result.rows);
@@ -128,4 +132,24 @@ const getFileUrl = async (req, res) => {
   }
 };
 
-export { getAllFiles, getFile, uploadFile, deleteFile, getFileUrl };
+const renameFile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const id = req.params.id;
+    const { name } = req.body;
+
+    const result = await pool.query(
+      "UPDATE files SET name = $1 WHERE id = $2 AND owner_id = $3 RETURNING *",
+      [name, id, userId],
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "File not found" });
+    }
+    return res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error("Rename error:", error);
+    res.status(500).json({ error: "Failed to rename file" });
+  }
+};
+
+export { getAllFiles, getFile, uploadFile, deleteFile, getFileUrl, renameFile };
