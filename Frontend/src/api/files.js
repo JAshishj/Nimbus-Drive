@@ -6,11 +6,6 @@ export const filesApi = {
     const res = await apiFetch(`/files${query}`, { method: "GET" });
     return res.json();
   },
-  getFile: async (id) => {
-    const res = await apiFetch(`/files/${id}`, { method: "GET" });
-    const data = await res.json();
-    return data;
-  },
   uploadFile: async (file, folderId) => {
     const formData = new FormData();
     formData.append("file", file);
@@ -38,5 +33,13 @@ export const filesApi = {
     const res = await apiFetch(`/files/${id}/download?mode=download`, { method: "GET" });
     const data = await res.json();
     return data.url;
-  }
+  },
+  renameFile: async (id, name) => {
+    const res = await apiFetch(`/files/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name }),
+    });
+    const data = await res.json();
+    return data;
+  },
 };

@@ -20,4 +20,12 @@ export const foldersApi = {
     });
     return res.json();
   },
+  renameFolder: async (id, name) => {
+    const res = await apiFetch(`/folders/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name }),
+      headers: { "Content-Type": "application/json" },
+    });
+    return res.json();
+  },
 };

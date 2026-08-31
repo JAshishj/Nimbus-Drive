@@ -4,9 +4,6 @@ let accessToken = null;
 export const setAccessToken = (token) => {
   accessToken = token;
 };
-export const getAcessToken = () => {
-  return accessToken;
-};
 
 let refreshPromise = null;
 
