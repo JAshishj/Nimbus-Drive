@@ -1,8 +1,8 @@
 export const sections = [
   { id: 'drive', label: 'My Drive', icon: 'drive' },
   { id: 'recent', label: 'Recent', icon: 'recent' },
+  { id: 'shared', label: 'Shared', icon: 'share'},
   { id: 'starred', label: 'Starred', icon: 'starred' },
-  { id: 'trash', label: 'Trash', icon: 'trash' },
 ]
 
 export const fileTypeMeta = {
@@ -54,4 +54,21 @@ export function formatBytes(bytes) {
     i++
   } while (v >= 1024 && i < units.length - 1)
   return `${v.toFixed(v >= 100 ? 0 : 1)} ${units[i]}`
+}
+
+export function formatDate(value, withTime = false) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  const dateStr = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+  if (!withTime) return dateStr
+  const timeStr = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+  return `${dateStr}, ${timeStr}`
 }
