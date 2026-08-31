@@ -24,6 +24,17 @@ export function useDeleteFolder(parentFolderId){
         mutationFn: (id) => foldersApi.deleteFolder(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['folders', parentFolderId ?? 'root'] });
+            queryClient.invalidateQueries({ queryKey: ["usedSpace"]});
+        }
+    })
+}
+
+export function useRenameFolder(parentFolderId){
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({id, name}) => foldersApi.renameFolder(id, name),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['folders', parentFolderId ?? 'root'] });
         }
     })
 }

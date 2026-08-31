@@ -8,13 +8,6 @@ export function useFiles(folderId) {
   });
 }
 
-export function useFile(id) {
-  return useQuery({
-    queryKey: ["files", "detail", id],
-    queryFn: () => filesApi.getFile(id),
-  });
-}
-
 export function useUploadFile(folderId) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -22,6 +15,7 @@ export function useUploadFile(folderId) {
       filesApi.uploadFile(file, folderId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["files", folderId ?? "root"] });
+      queryClient.invalidateQueries({ queryKey: ["usedSpace"]});
     }
   });
 }
@@ -32,6 +26,7 @@ export function useDeleteFile(folderId) {
     mutationFn: (id) => filesApi.deleteFile(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files', folderId ?? 'root'] });
+      queryClient.invalidateQueries({ queryKey: ["usedSpace"]});
     }
   });
 }
@@ -42,5 +37,15 @@ export function useViewFile(id){
     queryFn: () => filesApi.viewFile(id),
     enabled: !!id,
     staleTime: 0,
+  });
+}
+
+export function useRenameFile(folderId) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, name }) => filesApi.renameFile(id, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["files", folderId ?? "root"] });
+    }
   });
 }
