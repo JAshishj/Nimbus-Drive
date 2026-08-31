@@ -3,19 +3,22 @@ import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import { GridView, ListView, FileIcon } from "./components/FileView";
 import UploadModal from "./components/UploadModal";
+import ShareModal from "./components/ShareModal";
+import RenameModal from "./components/RenameModal";
 import Spinner from "./components/Spinner";
 import Icon from "./components/Icon";
-import { fileTypeMeta, typeFromFileName } from "./data/data.js";
+import { fileTypeMeta, typeFromFileName, formatDate } from "./data/data.js";
 import { useAuth } from "./Context/AuthContext.jsx";
 import { useFiles, useViewFile, useDeleteFile } from "./hooks/useFiles.js";
 import { useFolders, useDeleteFolder } from "./hooks/useFolders.js";
+import { useStarred, useStar, useUnStar } from "./hooks/useStar.js";
 import { filesApi } from "./api/files.js";
 
 const sectionName = {
   drive: "My Drive",
   recent: "Recent",
+  shared: "Shared with me",
   starred: "Starred",
-  trash: "Trash",
 };
 
 const App = () => {
@@ -26,10 +29,11 @@ const App = () => {
   const [open, setOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [shareTarget, setShareTarget] = useState(null);
+  const [renameTarget, setRenameTarget] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmFolderId, setConfirmFolderId] = useState(null);
   const [folderHistory, setFolderHistory] = useState([]);
-  const [, setBump] = useState(0);
   const { user } = useAuth();
 
   const confirmTimerRef = useRef(null);
@@ -60,32 +64,94 @@ const App = () => {
     isLoading: isLoadingFolders,
     isError: isErrorFolders,
   } = useFolders(currentFolderId);
+
   const { mutate: deleteFolder, isPending: isDeletingFolder } =
     useDeleteFolder(currentFolderId);
 
-  const handleItemClick = (item) => {
-    if (!item.mime_type) {
-      setConfirmFolderId(null);
-      setFolderHistory((h) => [...h, currentFolderId]);
-      setCurrentFolderId(item.id);
+  const { data: starredData, isLoading: isLoadingStarred } = useStarred();
+  const { mutate: starItem } = useStar(currentFolderId);
+  const { mutate: unStarItem } = useUnStar(currentFolderId);
+
+  const isStarredView = active === "starred";
+
+  const toggleStar = (item) => {
+    if (item.starred) {
+      if (item.mime_type) unStarItem({ fileId: item.id });
+      else unStarItem({ folderId: item.id });
+    } else if (item.mime_type) {
+      starItem({ fileId: item.id });
     } else {
-      setConfirmDelete(false);
-      setSelected(item);
+      starItem({ folderId: item.id });
     }
+  };
+
+  const handleSection = (id) => {
+    setActive(id);
+    setCurrentFolderId(null);
+    setFolderHistory([]);
+  };
+
+  const handleItemClick = (item, isDouble) => {
+    if (isDouble) {
+      if (item.mime_type) {
+        setConfirmDelete(false);
+        setSelected(item);
+      } else {
+        setFolderHistory((h) => [
+          ...h,
+          { id: currentFolderId, section: active },
+        ]);
+        if (active !== "drive") setActive("drive");
+        setCurrentFolderId(item.id);
+      }
+      return;
+    }
+    setConfirmDelete(false);
+    setSelected(item);
   };
 
   const goBack = () => {
     if (folderHistory.length === 0) return;
     const prev = folderHistory[folderHistory.length - 1];
-    setCurrentFolderId(prev);
+    setCurrentFolderId(prev.id);
+    setActive(prev.section);
     setFolderHistory((h) => h.slice(0, -1));
   };
 
   const items = (() => {
-    let list = [
-      ...(Array.isArray(folders) ? folders : []),
-      ...(Array.isArray(files) ? files : []),
-    ];
+    let list;
+    if (isStarredView) {
+      list = [
+        ...(Array.isArray(starredData?.starredFolders)
+          ? starredData.starredFolders
+          : []),
+        ...(Array.isArray(starredData?.starredFiles)
+          ? starredData.starredFiles
+          : []),
+      ].map((i) => ({ ...i, starred: i.starred ?? true }));
+    } else if (active === "recent") {
+      list = [
+        ...(Array.isArray(folders)
+          ? folders.sort(
+              (a, b) => new Date(b.updated_at) - new Date(a.updated_at),
+            )
+          : []),
+        ...(Array.isArray(files)
+          ? files.sort(
+              (a, b) => new Date(b.updated_at) - new Date(a.updated_at),
+            )
+          : []),
+      ];
+    } else {
+      list = [
+        ...(Array.isArray(folders)
+          ? folders.sort((a, b) => a.name.localeCompare(b.name))
+          : []),
+        ...(Array.isArray(files)
+          ? files.sort((a, b) => a.name.localeCompare(b.name))
+          : []),
+      ];
+    }
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((f) => f.name.toLowerCase().includes(q));
@@ -93,7 +159,21 @@ const App = () => {
     return list;
   })();
 
+  const starredIds = new Set([
+    ...(Array.isArray(files) ? files : [])
+      .filter((f) => f.starred)
+      .map((f) => f.id),
+    ...(isStarredView && Array.isArray(starredData?.starredFiles)
+      ? starredData.starredFiles.map((i) => i.id)
+      : []),
+  ]);
+  const selectedIsStarred = selected ? starredIds.has(selected.id) : false;
+
   const handleView = () => {
+    if (!selected.mime_type) {
+      closeModal();
+      return handleItemClick(selected, true);
+    }
     if (fileUrl) {
       window.open(fileUrl, "_blank");
     } else {
@@ -108,15 +188,6 @@ const App = () => {
     } catch (err) {
       console.error("Download failed:", err);
     }
-  };
-
-  const toggleStar = (id) => {
-    const f = files.find((x) => x.id === id);
-    if (f) {
-      f.starred = !f.starred;
-      setSelected((s) => (s && s.id === id ? { ...s, starred: f.starred } : s));
-    }
-    setBump((n) => n + 1);
   };
 
   const closeModal = () => {
@@ -145,7 +216,7 @@ const App = () => {
     <div className="flex h-screen overflow-hidden">
       <Sidebar
         active={active}
-        onSelect={setActive}
+        onSelect={handleSection}
         open={open}
         onToggle={() => setOpen(false)}
       />
@@ -165,12 +236,16 @@ const App = () => {
 
         <main className="flex-1 overflow-y-auto">
           <div className="px-4 md:px-8 py-6 max-w-6xl mx-auto">
-            {isLoadingFiles || isLoadingFolders ? (
+            {(
+              isStarredView
+                ? isLoadingStarred
+                : isLoadingFiles || isLoadingFolders
+            ) ? (
               <div className="py-20 flex flex-col items-center justify-center text-center">
                 <Spinner className="h-7 w-7 text-accent mb-3" />
                 <p className="text-sm font-medium text-mute">Loading files…</p>
               </div>
-            ) : isErrorFiles || isErrorFolders ? (
+            ) : !isStarredView && (isErrorFiles || isErrorFolders) ? (
               <div className="py-12 text-center text-red-500">
                 Error loading files.
               </div>
@@ -195,20 +270,20 @@ const App = () => {
                 {view === "grid" ? (
                   <GridView
                     items={items}
-                    onToggleStar={toggleStar}
                     onOpen={handleItemClick}
                     onDeleteFolder={handleDeleteFolder}
                     confirmDeleteId={confirmFolderId}
                     isDeletingFolder={isDeletingFolder}
+                    onToggleStar={toggleStar}
                   />
                 ) : (
                   <ListView
                     items={items}
-                    onToggleStar={toggleStar}
                     onOpen={handleItemClick}
                     onDeleteFolder={handleDeleteFolder}
                     confirmDeleteId={confirmFolderId}
                     isDeletingFolder={isDeletingFolder}
+                    onToggleStar={toggleStar}
                   />
                 )}
               </>
@@ -224,13 +299,25 @@ const App = () => {
         />
       )}
 
+      {shareTarget && (
+        <ShareModal item={shareTarget} onClose={() => setShareTarget(null)} />
+      )}
+
+      {renameTarget && (
+        <RenameModal
+          parentFolderId={currentFolderId}
+          item={renameTarget}
+          onClose={() => setRenameTarget(null)}
+        />
+      )}
+
       {selected && (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
           onClick={closeModal}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-surface border border-line shadow-2xl p-6"
+            className="w-full max-w-sm max-h-[calc(100vh-2rem)] overflow-auto rounded-2xl bg-surface border border-line shadow-2xl p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-4">
@@ -240,21 +327,44 @@ const App = () => {
                   {selected.name}
                 </h2>
                 <p className="mt-0.5 text-sm text-mute">
-                  {fileTypeMeta[selected.mime_type]?.label ||
-                    fileTypeMeta[selected.type]?.label ||
-                    fileTypeMeta[typeFromFileName(selected.name || "")]
-                      ?.label ||
-                    "File"}
+                  {!selected.mime_type
+                    ? "Folder"
+                    : fileTypeMeta[selected.mime_type]?.label ||
+                      fileTypeMeta[typeFromFileName(selected.name || "")]
+                        ?.label}
                   {selected.size ? ` · ${selected.size}` : ""}
                 </p>
               </div>
-              <button
-                onClick={closeModal}
-                className="grid place-items-center w-8 h-8 rounded-lg text-faint hover:bg-line/50 hover:text-ink"
-                aria-label="Close"
-              >
-                <Icon name="close" />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() =>
+                    toggleStar({
+                      ...selected,
+                      starred: selectedIsStarred,
+                    })
+                  }
+                  className={`grid place-items-center w-8 h-8 rounded-lg hover:bg-line/50 active:scale-90 transition-all ${
+                    selectedIsStarred
+                      ? "text-folder"
+                      : "text-faint hover:text-ink"
+                  }`}
+                  aria-label={selectedIsStarred ? "Remove star" : "Add star"}
+                >
+                  <Icon
+                    name="starred"
+                    size={18}
+                    strokeWidth={1.6}
+                    fill={selectedIsStarred ? "currentColor" : "none"}
+                  />
+                </button>
+                <button
+                  onClick={closeModal}
+                  className="grid place-items-center w-8 h-8 rounded-lg text-faint hover:bg-line/50 hover:text-ink"
+                  aria-label="Close"
+                >
+                  <Icon name="close" />
+                </button>
+              </div>
             </div>
 
             <dl className="mt-5 space-y-2.5 text-sm">
@@ -265,20 +375,22 @@ const App = () => {
               <div className="flex justify-between">
                 <dt className="text-faint">Modified</dt>
                 <dd className="font-medium">
-                  {selected.created_at ||
+                  {formatDate(
                     selected.updated_at ||
-                    selected.modified ||
-                    "—"}
+                      selected.created_at ||
+                      selected.modified,
+                    true,
+                  ) || "—"}
                 </dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-faint">Type</dt>
                 <dd className="font-medium">
-                  {fileTypeMeta[selected.mime_type]?.label ||
-                    fileTypeMeta[selected.type]?.label ||
-                    fileTypeMeta[typeFromFileName(selected.name || "")]
-                      ?.label ||
-                    "File"}
+                  {!selected.mime_type
+                    ? "Folder"
+                    : fileTypeMeta[selected.mime_type]?.label ||
+                      fileTypeMeta[typeFromFileName(selected.name || "")]
+                        ?.label}
                 </dd>
               </div>
             </dl>
@@ -307,15 +419,23 @@ const App = () => {
               >
                 <Icon name="download" size={16} /> Download
               </button>
-              <button className="flex items-center justify-center gap-2 h-10 rounded-lg border border-line text-sm font-medium hover:bg-canvas transition-colors">
+              <button
+                onClick={() => {
+                  setRenameTarget(selected);
+                  closeModal();
+                }}
+                className="flex items-center justify-center gap-2 h-10 rounded-lg border border-line text-sm font-medium hover:bg-canvas transition-colors cursor-pointer"
+              >
                 <Icon name="rename" size={16} /> Rename
               </button>
               <button
-                /*onClick={() => toggleStar(selected.id)}*/
+                onClick={() => {
+                  setShareTarget(selected);
+                  closeModal();
+                }}
                 className="flex items-center justify-center gap-2 h-10 rounded-lg border border-line text-sm font-medium hover:bg-canvas transition-colors"
               >
-                <Icon name="starred" size={16} />
-                {selected.starred ? "Unstar" : "Star"}
+                <Icon name="share" size={16} /> Share
               </button>
             </div>
 

@@ -48,7 +48,6 @@ export default function UploadModal({ folderId, onClose }) {
     };
   }, []);
 
-  // Close on Escape key if not currently uploading
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && !isPending) {
@@ -59,7 +58,6 @@ export default function UploadModal({ folderId, onClose }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isPending, onClose]);
 
-  // Handle file selection from input or drop
   const handleFileSelect = (file) => {
     if (!file) return;
     if (isError) reset();
@@ -71,7 +69,6 @@ export default function UploadModal({ folderId, onClose }) {
     uploadFile(selectedFile,
       {
         onSuccess: () => {
-          // Auto close modal after brief delay so user sees the success state
           timerRef.current = setTimeout(onClose, 1200);
         },
       },

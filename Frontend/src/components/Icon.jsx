@@ -9,6 +9,15 @@ const paths = {
   starred: (
     <path d="m12 2.5 2.9 6.2 6.6.9-4.8 4.6 1.2 6.6-5.9-3.3-5.9 3.3 1.2-6.6L2.5 9.6l6.6-.9L12 2.5Z" />
   ),
+  share: (
+    <>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </>
+  ),
   trash: (
     <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6" />
   ),
@@ -136,13 +145,14 @@ export default function Icon({
   size = 20,
   className = "",
   strokeWidth = 1.8,
+  fill = "none",
 }) {
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
+      fill={fill}
       stroke="currentColor"
       strokeWidth={strokeWidth}
       strokeLinecap="round"

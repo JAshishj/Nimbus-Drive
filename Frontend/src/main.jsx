@@ -50,8 +50,8 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 30 * 1000,
       retry: 1,
-    }
-  }
+    },
+  },
 });
 
 createRoot(document.getElementById("root")).render(
