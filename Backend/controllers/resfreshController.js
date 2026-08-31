@@ -15,13 +15,19 @@ const handelrefresh = async (req, res) => {
   );
 
   const stored = result.rows[0];
-  if (!stored) return res.status(401).json({ error: "Invalid or expired refresh token" });
+  if (!stored)
+    return res.status(401).json({ error: "Invalid or expired refresh token" });
 
   const accessToken = jwt.sign(
     { userId: stored.user_id },
     process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: "15m" },
   );
+  if (Math.random() < 0.05) {
+    pool
+      .query("DELETE FROM refresh_tokens WHERE expires_at < NOW()")
+      .catch((error) => console.error("Opportunistic cleanup failed:", error));
+  }
   res.status(200).json({ accessToken });
 };
 
