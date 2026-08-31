@@ -10,9 +10,9 @@ const upload = multer({
     key: (req, file, cb) => {
       const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
       // For development:
-      cb(null, `test/${req.user.userId}/${uniqueSuffix}${extname(file.originalname)}`);
+      // cb(null, `test/${req.user.userId}/${uniqueSuffix}${extname(file.originalname)}`);
       // For production:
-      // cb(null, `uploads/${req.user.userId}/${uniqueSuffix}${extname(file.originalname)}`);
+      cb(null, `uploads/${req.user.userId}/${uniqueSuffix}${extname(file.originalname)}`);
     },
   }),
   limits: {
