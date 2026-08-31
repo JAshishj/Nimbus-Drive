@@ -1,9 +1,8 @@
 import express from "express";
-import { verifyJWT } from "../middleware/verifyJWT.js";
-import { getMe } from "../controllers/meController.js";
+import { getMe, getStorage } from "../controllers/meController.js";
 
 const router = express.Router();
 
-router.get("/me", verifyJWT, getMe);
+router.get("/me", getMe).get("/me/storage", getStorage);
 
 export default router;
