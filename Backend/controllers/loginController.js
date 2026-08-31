@@ -63,7 +63,6 @@ const loginUser = async (req, res) => {
       user: { id: user.id, name: user.name, email: user.email },
     });
   } catch (error) {
-    console.error("Error registering user:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
