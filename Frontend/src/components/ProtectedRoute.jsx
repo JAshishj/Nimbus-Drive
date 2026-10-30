@@ -8,8 +8,13 @@ export function ProtectedRoute({ children }) {
 
   if (isLoading) {
     return (
-      <div className="grid h-screen place-items-center">
-        <Spinner className="h-6 w-6 text-accent" />
+      <div className="grid h-screen place-items-center px-6 text-center">
+        <div className="flex flex-col items-center">
+          <Spinner className="h-6 w-6 text-accent" />
+          <p className="mt-4 text-sm text-mute">
+            Initial load might take up to a minute on the first visit.
+          </p>
+        </div>
       </div>
     );
   }

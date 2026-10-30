@@ -33,9 +33,9 @@ export function useDeleteFile(folderId) {
 
 export function useViewFile(id){
   return useQuery({
+    enabled: !!id,
     queryKey: ["files", "view", id],
     queryFn: () => filesApi.viewFile(id),
-    enabled: !!id,
     staleTime: 0,
   });
 }

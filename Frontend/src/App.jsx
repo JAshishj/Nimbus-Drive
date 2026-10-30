@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import { GridView, ListView, FileIcon } from "./components/FileView";
@@ -118,7 +118,7 @@ const App = () => {
     setFolderHistory((h) => h.slice(0, -1));
   };
 
-  const items = (() => {
+  const items = useMemo(() => {
     let list;
     if (isStarredView) {
       list = [
@@ -157,16 +157,20 @@ const App = () => {
       list = list.filter((f) => f.name.toLowerCase().includes(q));
     }
     return list;
-  })();
+  }, [isStarredView, starredData, active, folders, files, search]);
 
-  const starredIds = new Set([
-    ...(Array.isArray(files) ? files : [])
-      .filter((f) => f.starred)
-      .map((f) => f.id),
-    ...(isStarredView && Array.isArray(starredData?.starredFiles)
-      ? starredData.starredFiles.map((i) => i.id)
-      : []),
-  ]);
+  const starredIds = useMemo(
+    () =>
+      new Set([
+        ...(Array.isArray(files) ? files : [])
+          .filter((f) => f.starred)
+          .map((f) => f.id),
+        ...(isStarredView && Array.isArray(starredData?.starredFiles)
+          ? starredData.starredFiles.map((i) => i.id)
+          : []),
+      ]),
+    [files, isStarredView, starredData],
+  );
   const selectedIsStarred = selected ? starredIds.has(selected.id) : false;
 
   const handleView = () => {
@@ -197,9 +201,13 @@ const App = () => {
   };
 
   const handleDelete = () => {
-    deleteFile(selected.id, {
-      onSuccess: () => closeModal(),
-    });
+    if (!selected.mime_type) {
+      handleDeleteFolder(selected.id);
+    } else {
+      deleteFile(selected.id, {
+        onSuccess: () => closeModal(),
+      });
+    }
   };
 
   const handleDeleteFolder = (id) => {

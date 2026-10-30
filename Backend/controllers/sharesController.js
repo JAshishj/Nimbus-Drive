@@ -17,9 +17,9 @@ const share = async (req, res) => {
     const targetId = await pool.query("SELECT id FROM users WHERE email = $1", [
       normalizedTargetEmail,
     ]);
-    if (targetId.rows.length == 0)
+    if (targetId.rows.length === 0)
       return res.status(404).json({ message: "User not found" });
-    else if (userId == targetId.rows[0].id)
+    else if (userId === targetId.rows[0].id)
       return res
         .status(400)
         .json({ message: "You cannot share file with yourself" });
@@ -31,7 +31,7 @@ const share = async (req, res) => {
       );
       if (file.rows.length == 0)
         return res.status(404).json({ message: "File not found" });
-      else if (file.rows[0].owner_id != userId)
+      else if (file.rows[0].owner_id !== userId)
         return res
           .status(400)
           .json({ message: "You are not the owner of the file" });
@@ -47,7 +47,7 @@ const share = async (req, res) => {
         "SELECT owner_id FROM folders WHERE id = $1",
         [folderId],
       );
-      if (folder.rows.length == 0)
+      if (folder.rows.length === 0)
         return res.status(404).json({ message: "Folder not found" });
       else if (folder.rows[0].owner_id != userId)
         return res

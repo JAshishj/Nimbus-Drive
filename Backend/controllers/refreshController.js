@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { createHash } from "crypto";
 import pool from "../config/db.js";
 
-const handelrefresh = async (req, res) => {
+const handleRefresh = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) return res.status(401).json({ error: "No refresh token" });
 
@@ -31,4 +31,4 @@ const handelrefresh = async (req, res) => {
   res.status(200).json({ accessToken });
 };
 
-export { handelrefresh };
+export { handleRefresh };

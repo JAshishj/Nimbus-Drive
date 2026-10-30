@@ -36,7 +36,6 @@ const createFolder = async (req, res) => {
     );
     res.status(201).json({ message: "Folder created" });
   } catch (error) {
-    console.error("Folder creation error:", error);
     res.status(500).json({ error: "Failed to create folder" });
   }
 };
@@ -93,7 +92,7 @@ const renameFolder = async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Folder not found" });
     }
-    res.status(201).json(result.rows[0]);
+    res.status(200).json(result.rows[0]);
   } catch (error) {
     console.error("Folder rename error:", error);
     res.status(500).json({ error: "Failed to rename folder" });

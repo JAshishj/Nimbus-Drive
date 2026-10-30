@@ -200,6 +200,10 @@ const Login = () => {
               Create one
             </Link>
           </p>
+
+          <p className="mt-6 text-xs text-faint text-center">
+            Initial load might take up to a minute on the first visit.
+          </p>
         </div>
       </div>
     </div>

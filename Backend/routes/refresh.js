@@ -1,8 +1,8 @@
 import express from "express";
-import { handelrefresh } from "../controllers/resfreshController.js";
+import { handleRefresh } from "../controllers/refreshController.js";
 
 const router = express.Router();
 
-router.post("/refresh", handelrefresh);
+router.post("/refresh", handleRefresh);
 
 export default router;
