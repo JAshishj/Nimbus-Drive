@@ -17,13 +17,9 @@ import starRoute from "./routes/star.js";
 
 const app = express();
 
-const apiLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 500,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: "Too many attempts, please try again in a minute" },
-});
+// Render (and most hosts) sit behind a reverse proxy. Trust exactly one hop
+// so rate limiting keys on the real client IP instead of the proxy's IP.
+app.set("trust proxy", 1);
 
 const authLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -43,7 +39,8 @@ app.use(helmet());
 app.use(cookieParser());
 app.use(express.json());
 
-app.use(apiLimiter);
+// Rate-limit only the sensitive auth endpoints. Read endpoints (/me, /files,
+// /folders) are JWT-protected and shouldn't consume a shared browse quota.
 app.use("/", authLimiter, registerRoute);
 app.use("/", authLimiter, loginRoute);
 app.use("/", refreshRoute);

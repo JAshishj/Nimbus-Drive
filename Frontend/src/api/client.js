@@ -72,9 +72,11 @@ export async function apiFetch(endpoint, options = {}) {
 
   if (!response.ok) {
     let message = "Request failed";
-    const errorData = await response.clone().json();
+    const errorData = await response.clone().json().catch(() => ({}));
     message = errorData.message || errorData.error || message;
-    throw new Error(message);
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
   }
 
   return response;

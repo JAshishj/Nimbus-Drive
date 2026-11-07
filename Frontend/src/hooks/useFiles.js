@@ -36,7 +36,11 @@ export function useViewFile(id){
     enabled: !!id,
     queryKey: ["files", "view", id],
     queryFn: () => filesApi.viewFile(id),
-    staleTime: 0,
+    // Presigned URLs expire after 5 minutes; cache just under that so we
+    // don't refetch on every mount/focus (which caused duplicate requests).
+    staleTime: 4 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }
 
