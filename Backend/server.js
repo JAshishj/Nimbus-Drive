@@ -23,7 +23,7 @@ app.set("trust proxy", 1);
 
 const authLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 10,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many attempts, please try again in a minute" },
