@@ -45,22 +45,73 @@ const getFile = async (req, res) => {
   }
 };
 
+const STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024; // 1 GB
+
 const uploadFile = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
     const userId = req.user.userId;
     const folderId = req.body.folderId || null;
+
+    // Ensure the target folder exists and belongs to this user before storing.
+    if (folderId) {
+      const folder = await pool.query(
+        "SELECT id FROM folders WHERE id = $1 AND owner_id = $2",
+        [folderId, userId],
+      );
+      if (folder.rows.length === 0) {
+        // multer already stored the object in R2; remove it to avoid an orphan.
+        await r2.send(
+          new DeleteObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: req.file.key,
+          }),
+        );
+        return res.status(404).json({ error: "Folder not found" });
+      }
+    }
+
+    const storage = await pool.query(
+      'SELECT COALESCE(SUM(size), 0) AS "usedSpace" FROM files WHERE owner_id = $1',
+      [userId],
+    );
+    const usedSpace = Number(storage.rows[0].usedSpace);
+
+    if (usedSpace + req.file.size > STORAGE_LIMIT_BYTES) {
+      // multer already streamed the object to R2; remove it so a rejected
+      // upload doesn't leave an orphaned file consuming storage.
+      await r2.send(
+        new DeleteObjectCommand({
+          Bucket: process.env.R2_BUCKET_NAME,
+          Key: req.file.key,
+        }),
+      );
+      return res.status(400).json({ error: "Storage limit exceeded" });
+    }
+
     // R2 uses key instead of path
     const { originalname, mimetype, size, key } = req.file;
 
-    const result = await pool.query(
-      "INSERT INTO files (name, path, size, mime_type, owner_id, folder_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+    await pool.query(
+      "INSERT INTO files (name, path, size, mime_type, owner_id, folder_id) VALUES ($1, $2, $3, $4, $5, $6)",
       [originalname, key, size, mimetype, userId, folderId],
     );
     return res.status(201).json({ message: "File uploaded" });
   } catch (error) {
-    res.status(500).json({ error: "Failed to upload file" });
+    console.error("Upload error:", error);
+    // Best-effort cleanup if the insert failed after the object was stored.
+    if (req.file?.key) {
+      await r2
+        .send(
+          new DeleteObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: req.file.key,
+          }),
+        )
+        .catch(() => {});
+    }
+    return res.status(500).json({ error: "Failed to upload file" });
   }
 };
 
